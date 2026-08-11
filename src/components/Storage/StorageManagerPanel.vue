@@ -310,9 +310,16 @@ export default {
 			// TODO: the part is repetition
 			//  with APPs Installation Location requirement document
 			// 获取merge信息
+			let mergeInfo = null
 			let mergeStorageList
 			try {
-				mergeStorageList = await this.$api.local_storage.getMergerfsInfo().then((res) => res.data.data[0]['source_volume_uuids'])
+				mergeInfo = await this.$api.local_storage.getMergerfsInfo().then((res) => {
+					const data = res.data.data
+					return Array.isArray(data) ? data[0] : data
+				})
+				mergeStorageList = mergeInfo && Array.isArray(mergeInfo.source_volume_uuids)
+					? mergeInfo.source_volume_uuids
+					: []
 			} catch (e) {
 				mergeStorageList = []
 				console.log(e)
@@ -322,40 +329,33 @@ export default {
 				// get storage list info
 				const storageRes = await this.$api.storage.list({ system: "show" }).then(v => v.data.data)
 				let storageArray = []
-				let mergeConbinations = []
-				let testMergeMiss = mergeStorageList
 				storageRes.forEach(item => {
 					item.children.forEach(part => {
 						part.disk = item.path
 						part.diskName = item.disk_name
-						// storageArray.push(part)
-						if (mergeStorageList.includes(part.uuid) || (mergeStorageList.length > 0 && item.disk_name === 'System')) {
-							mergeConbinations.push(part)
-							testMergeMiss = testMergeMiss.filter(v => v !== part.uuid)
-						} else {
-							storageArray.push(part)
-						}
+						storageArray.push(part)
 					})
 				})
+
+				const mergeStorageSet = new Set(mergeStorageList)
+				const mergeConbinations = storageArray.filter(part => mergeStorageSet.has(part.uuid))
+				if (mergeStorageList.length && mergeInfo && mergeInfo.source_base_path) {
+					const sourceBasePath = mergeInfo.source_base_path
+					const baseStorage = storageArray
+						.filter(part => {
+							const mountPoint = part.mount_point
+							return mountPoint && (mountPoint === '/'
+								|| sourceBasePath === mountPoint
+								|| sourceBasePath.startsWith(`${mountPoint.replace(/\/$/, '')}/`))
+						})
+						.sort((a, b) => b.mount_point.length - a.mount_point.length)[0]
+					if (baseStorage && !mergeConbinations.includes(baseStorage)) {
+						mergeConbinations.unshift(baseStorage)
+					}
+				}
 				// sort
 				let storageArraySort = orderBy(storageArray, ['diskName', 'label'], ['desc', 'asc']);
 				let mergeConbinationsSort = orderBy(mergeConbinations, ['diskName', 'label'], ['desc', 'asc']);
-				// mergeConbinations.reverse();
-				testMergeMiss.forEach(item => {
-					mergeConbinationsSort.push({
-						"uuid": "",
-						"mount_point": "",
-						"size": "",
-						"avail": "",
-						"type": "",
-						"path": item,
-						"drive_name": "",
-						"label": "",
-						"persisted_in": "",
-						"disk": "",
-						"diskName": ""
-					})
-				})
 
 				const remapStorage = (storage) => {
 					return {
@@ -369,7 +369,8 @@ export default {
 						diskName: storage.drive_name,
 						path: storage.path,
 						mount_point: storage.mount_point,
-						disk: storage.disk
+						disk: storage.disk,
+						isMergeSource: mergeConbinations.includes(storage)
 					}
 				}
 				this.storageData = storageArraySort.map(remapStorage);

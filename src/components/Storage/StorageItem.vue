@@ -10,6 +10,8 @@
 						{{ item.name }}
 						<b-tag v-if="item.isSystem" class="ml-2 has-text-full-04">OS
 						</b-tag>
+						<b-tag v-if="item.isMergeSource && !item.isSystem" class="ml-2 has-text-full-04">{{ $t('Merged') }}
+						</b-tag>
 					</h4>
 
 					<p class="has-text-left has-text-full-04 has-text-grey-light mt-1">{{ $t('Single Drive Storage') }},
@@ -29,7 +31,7 @@
 				</div>
 
 			</div>
-			<div v-if="!item.isSystem" class="is-flex is-align-items-center b-group">
+			<div v-if="!item.isSystem && !item.isMergeSource" class="is-flex is-align-items-center b-group">
 				<b-button :disabled="isRemoving" :loading="isFormating" :type="isFormating?'is-primary':''"
 						  rounded size="is-small" @click="formatStorage(item.path,item.mount_point)">
 					{{ $t('Format') }}
@@ -38,7 +40,7 @@
 						  rounded size="is-small" @click="removeStorage(item.disk)"> {{ $t('Remove') }}
 				</b-button>
 			</div>
-			<p v-else-if="item.usePercent >= 80" class="has-text-right is-flex is-flex-direction-column-reverse">
+			<p v-else-if="item.isSystem && item.usePercent >= 80" class="has-text-right is-flex is-flex-direction-column-reverse">
 				<a rel="noopener" href="https://wiki.casaos.io/zh/guides" target="_blank">{{ $t("Free up storage") }}</a>
 			</p>
 		</div>

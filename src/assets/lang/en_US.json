@@ -169,6 +169,8 @@
   "Storage Manager": "Storage Manager",
   "Storage": "Storage",
   "Merged Storage": "Merged Storage",
+  "Merged": "Merged",
+  "Storage Sources": "{count} storage sources",
   "No merged storage has been configured.": "No merged storage has been configured.",
   "No standalone storage is available.": "No standalone storage is available.",
   "Drive": "Drive",
