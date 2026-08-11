@@ -30,12 +30,23 @@
 					</div>
 					<b-tabs v-model="activeTab" :animated="false">
 						<b-tab-item :label="$t('Storage')" class="scrollbars-light-auto tab-item">
-							<storage-combination :storageData="mergeConbinationsStorageData"
-								:type="state_mainstorage_operability" @reload="getDiskList"></storage-combination>
 							<template v-if="storageData.length">
 								<storage-item v-for="(item, index) in storageData" :key="'storage' + index" :item="item"
 									@getDiskList="getDiskList"></storage-item>
 							</template>
+							<div v-else class="has-text-centered has-text-grey-light mt-6">
+								{{ $t('No standalone storage is available.') }}
+							</div>
+						</b-tab-item>
+						<b-tab-item :label="$t('Merged Storage')" class="scrollbars-light-auto tab-item">
+							<storage-combination v-if="mergeConbinationsStorageData.length"
+								:storageData="mergeConbinationsStorageData"
+								:type="state_mainstorage_operability"
+								@merge-success="showMergedStorage"
+								@reload="getDiskList"></storage-combination>
+							<div v-else class="has-text-centered has-text-grey-light mt-6">
+								{{ $t('No merged storage has been configured.') }}
+							</div>
 						</b-tab-item>
 						<b-tab-item :label="$t('Drive')" class="scrollbars-light-auto tab-item">
 							<drive-item v-for="(item, index) in diskData" :key="'disk' + index" :item="item"></drive-item>
@@ -236,7 +247,7 @@ export default {
 					case 0:
 						this.$messageBus('storagemanager_storage');
 						break;
-					case 1:
+					case 2:
 						this.$messageBus('storagemanager_drive');
 						break;
 				}
@@ -274,6 +285,11 @@ export default {
 	},
 
 	methods: {
+		async showMergedStorage() {
+			await this.getDiskList()
+			this.activeTab = 1
+		},
+
 		/**
 		 * @description: Get disk list
 		 * @param {}
@@ -384,6 +400,9 @@ export default {
 				console.log(error);
 			}
 
+			if (this.isLoading && this.mergeConbinationsStorageData.length) {
+				this.activeTab = 1
+			}
 			this.isLoading = false
 		},
 
@@ -456,6 +475,9 @@ export default {
 					this.$EventBus.$emit(events.REFRESH_DISKLIST);
 				},
 				events: {
+					'merge-success': () => {
+						this.showMergedStorage();
+					},
 					close: () => {
 						this.$EventBus.$emit(events.REFRESH_DISKLIST);
 					}

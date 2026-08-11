@@ -137,6 +137,9 @@ export default {
 				onCancel: () => {
 				},
 				events: {
+					'merge-success': () => {
+						this.$emit('merge-success');
+					},
 					close: () => {
 						this.$emit("reload");
 					}

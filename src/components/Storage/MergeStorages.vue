@@ -333,6 +333,7 @@ export default {
 						}
 					})
 					this.$EventBus.$emit(events.RELOAD_APP_LIST)
+					this.$emit('merge-success')
 				}).catch(e => {
 					this.$buefy.toast.open({
 						message: e.response.data.data || e.response.data.message,
