@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'vitest'
-import { renderSize } from './file_utils'
+import { filterHiddenFiles, renderSize } from './file_utils'
 
 describe('renderSize', () => {
 	test.each([
@@ -16,5 +16,25 @@ describe('renderSize', () => {
 		[1024**6, '1 EB'],
 	])('format %s bytes as %s', (bytes, formattedSize) => {
 		expect(renderSize(bytes)).toEqual(formattedSize)
+	})
+})
+
+describe('filterHiddenFiles', () => {
+	const files = [
+		{ name: 'visible-file.txt' },
+		{ name: '.hidden-file' },
+		{ name: '.hidden-folder' },
+		{ name: 'file.with-dot.txt' },
+	]
+
+	test('filters dot-prefixed files and folders when disabled', () => {
+		expect(filterHiddenFiles(files, false)).toEqual([
+			{ name: 'visible-file.txt' },
+			{ name: 'file.with-dot.txt' },
+		])
+	})
+
+	test('keeps dot-prefixed files and folders when enabled', () => {
+		expect(filterHiddenFiles(files, true)).toBe(files)
 	})
 })

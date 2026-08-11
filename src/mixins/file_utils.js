@@ -10,3 +10,15 @@ export const renderSize  = (bytes) => {
     if (i === 0) return `${bytes} ${sizes[i]}`
     return `${parseFloat((bytes / (1024 ** i)).toFixed(2))} ${sizes[i]}`
 }
+
+/**
+ * Filter dot-prefixed files and folders unless hidden entries are enabled.
+ * @param {Array} files
+ * @param {Boolean} showHiddenFiles
+ * @return {Array}
+ */
+export const filterHiddenFiles = (files, showHiddenFiles) => {
+    if (showHiddenFiles) return files
+
+    return files.filter((file) => !file.name.startsWith('.'))
+}

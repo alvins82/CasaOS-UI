@@ -118,7 +118,7 @@
 								<!-- Header End -->
 
 								<!-- Tool Bar Start -->
-								<div v-if="listData.length > 0" class="tool-bar is-flex mb-2 mt-2 is-flex-shrink-0">
+								<div v-if="allListData.length > 0" class="tool-bar is-flex mb-2 mt-2 is-flex-shrink-0">
 									<div class="is-flex-grow-1 has-text-left is-flex is-align-items-center">
 										<b-field class="ml-1 is-flex is-size-14px mb-0" expanded >
 											<b-checkbox v-model="isSelectAll" :class="selectState" size="is-small"
@@ -132,6 +132,14 @@
 										</b-field>
 									</div>
 									<div class="view-btns is-flex-shrink-0">
+										<b-tooltip :label="showHiddenFilesLabel" position="is-left" type="is-dark">
+											<p :aria-label="showHiddenFilesLabel" :aria-pressed="showHiddenFiles"
+												class="is-clickable none-line-height mr-3" role="button" tabindex="0"
+												@keydown.enter.prevent="toggleHiddenFiles" @keydown.space.prevent="toggleHiddenFiles"
+												@click="toggleHiddenFiles">
+												<b-icon :icon="hiddenFilesIcon" pack="casa"></b-icon>
+											</p>
+										</b-tooltip>
 										<b-tooltip :label="$t('Change View')" position="is-left" type="is-dark">
 											<p class="is-clickable none-line-height" role="button" @click="changeView">
 												<b-icon :icon="viewIcon"></b-icon>
@@ -229,6 +237,7 @@ import dropRight from "lodash/dropRight";
 import isEqual from "lodash/isEqual";
 
 import { mixin } from "@/mixins/mixin";
+import { filterHiddenFiles } from "@/mixins/file_utils";
 import VueBreakpointMixin from "vue-breakpoint-mixin";
 import events from "@/events/events";
 
@@ -264,6 +273,8 @@ import MergeStorages from "@/components/Storage/MergeStorages.vue";
 
 // Drop
 import DropEntryButton from "./drop/DropEntryButton.vue";
+
+const SHOW_HIDDEN_FILES_STORAGE_KEY = "casaos-filebrowser-show-hidden-files";
 
 export default {
 	name: "file-panel",
@@ -320,6 +331,8 @@ export default {
 			currentPath: "",
 			currentPathName: "",
 			isViewGird: true,
+			showHiddenFiles: localStorage.getItem(SHOW_HIDDEN_FILES_STORAGE_KEY) === "true",
+			allListData: [],
 			listData: [],
 			selectedArray: [],
 			file: null,
@@ -381,6 +394,12 @@ export default {
 			return this.$store.state.isViewGird
 				? "view-grid-outline"
 				: "format-list-bulleted";
+		},
+		hiddenFilesIcon() {
+			return this.showHiddenFiles ? "eye-off" : "eye";
+		},
+		showHiddenFilesLabel() {
+			return this.$t(this.showHiddenFiles ? "Hide hidden files" : "Show hidden files");
 		},
 		listView() {
 			return this.$store.state.isViewGird ? "gird-view" : "list-view";
@@ -566,7 +585,7 @@ export default {
 						this.isLoading = false;
 						this.currentPathName = path.split("/").pop();
 						const fileList = res.data.data.content;
-						const newFileList = fileList.map((item) => {
+						this.allListData = fileList.map((item) => {
 							return {
 								date: item.date,
 								isSelected: false,
@@ -578,11 +597,7 @@ export default {
 								extensions: item.extensions,
 							};
 						});
-						// filter hidden files
-						const filterList = newFileList.filter((item) => {
-							return !item.name.startsWith(".");
-						});
-						this.listData = orderBy(filterList, ["is_dir"], ["desc"]);
+						this.updateVisibleList();
 						this.handelListChange(this.listData);
 						this.errorMsg = "";
 						this.isEmpty = true;
@@ -591,6 +606,7 @@ export default {
 				.catch((error) => {
 					this.isLoading = false;
 					this.isEmpty = false;
+					this.allListData = [];
 					this.listData = [];
 					this.errorMsg = error.response.data.data;
 					this.handelListChange(this.listData);
@@ -615,6 +631,44 @@ export default {
 		changeView() {
 			this.isViewGird = !this.$store.state.isViewGird;
 			this.$store.commit("SET_IS_VIEW_GRID", this.isViewGird);
+		},
+
+		/**
+		 * @description: Apply the hidden-file preference to the current folder.
+		 * @return {*}
+		 */
+		updateVisibleList() {
+			const visibleList = filterHiddenFiles(this.allListData, this.showHiddenFiles);
+			this.listData = orderBy(visibleList, ["is_dir"], ["desc"]);
+		},
+
+		/**
+		 * @description: Reset selection state after changing the visible list.
+		 * @return {*}
+		 */
+		clearSelection() {
+			this.allListData.forEach((item) => {
+				item.isSelected = false;
+			});
+			this.selectedArray = [];
+			this.selectState = "none";
+			this.isSelectAll = false;
+			this.isToolbarShow = false;
+			if (this.$refs.listview) {
+				this.$refs.listview.selectList = [];
+			}
+		},
+
+		/**
+		 * @description: Toggle visibility of dot-prefixed files and folders.
+		 * @return {*}
+		 */
+		toggleHiddenFiles() {
+			this.showHiddenFiles = !this.showHiddenFiles;
+			localStorage.setItem(SHOW_HIDDEN_FILES_STORAGE_KEY, String(this.showHiddenFiles));
+			this.clearSelection();
+			this.updateVisibleList();
+			this.handelListChange(this.listData);
 		},
 
 		/**
