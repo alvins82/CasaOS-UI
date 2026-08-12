@@ -29,7 +29,7 @@
 						{{ $t('System Storage') }}
 					</span>
 					<span class="one-line small-font _has-text-gray-600">
-						{{ $t('Always Included') }} · {{ systemStorage.sourcePath }}
+						{{ $t('Always Included') }} · {{ systemStorage.displayPath }}
 					</span>
 				</div>
 				<div class="is-flex is-flex-shrink-0 is-flex-direction-column is-justify-content-center mr-2">
@@ -295,7 +295,7 @@ export default {
 			this.systemStorage = systemStorage ? {
 				size: systemStorage.size,
 				availSize: systemStorage.avail,
-				sourcePath: sourceBasePath,
+				displayPath: '/DATA',
 			} : null
 			this.checkBoxMissGroup.push(...testMergeMiss);
 			testMergeMiss.forEach(item => {
