@@ -9,8 +9,19 @@
 
 import events from '@/events/events'
 
+const OPEN_IN_NEW_WINDOW_APP_IDS = new Set([
+	'qbittorrent',
+	'org.icewhale.qbittorrent',
+])
+
 export default {
 	methods: {
+		shouldOpenInNewWindow(appInfo) {
+			return [appInfo.id, appInfo.name]
+				.filter(Boolean)
+				.map(identifier => String(identifier).toLowerCase())
+				.some(identifier => OPEN_IN_NEW_WINDOW_APP_IDS.has(identifier))
+		},
 		openAppToNewWindow(appInfo) {
 			this.hasNewTag(appInfo.name) ? this.firstOpenThirdApp(appInfo) : this.openThirdApp(appInfo);
 		},
@@ -22,6 +33,12 @@ export default {
 				const port = appInfo.port ? `:${appInfo.port}` : ''
 				const index = appInfo.index || ''
 				const url = `${scheme}://${hostIp}${port}${index}`
+
+				if (this.shouldOpenInNewWindow(appInfo)) {
+					window.open(url, '_blank')
+					this.$EventBus.$emit(events.CLOSE_APP_IFRAME)
+					return
+				}
 
 				this.$EventBus.$emit(events.OPEN_APP_IFRAME, {
 					name: appInfo.name,
