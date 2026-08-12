@@ -17,7 +17,27 @@
 		<section v-if="currentStep === 0"
 				 class="notification is-overlay mr-5 ml-5 mb-0 pr-0 pl-0 pt-5 pb-3 non-backgroud">
 			<div v-if="currentStep === 0" class="_is-normal _has-text-gray-600 mb-4">
-				{{ $t('All the checked Storage will be merged into CasaOS HD.') }}
+				{{ $t('System storage is always included. Select any additional storage to merge into CasaOS HD.') }}
+			</div>
+
+			<div v-if="systemStorage" class="is-flex mb-1 radius system-storage-row">
+				<div class="ml-2 mr-1 is-flex is-align-items-center _has-text-gray-600">
+					<b-icon icon="storage-other" pack="casa" size="is-20"></b-icon>
+				</div>
+				<div class="is-flex is-flex-grow-1 is-flex-direction-column is-justify-content-center">
+					<span class="is-uppercase one-line _is-text-emphasis-03 _has-text-gray-800">
+						{{ $t('System Storage') }}
+					</span>
+					<span class="one-line small-font _has-text-gray-600">
+						{{ $t('Always Included') }} · {{ systemStorage.sourcePath }}
+					</span>
+				</div>
+				<div class="is-flex is-flex-shrink-0 is-flex-direction-column is-justify-content-center mr-2">
+					<span class="is-uppercase _is-text-full-03 _has-text-gray-600">{{
+							renderSize(systemStorage.size - systemStorage.availSize)
+						}}/{{ renderSize(systemStorage.size) }}</span>
+				</div>
+				<b-checkbox v-model="systemStorageSelected" disabled class="mr-2"></b-checkbox>
 			</div>
 
 			<div v-for="(item, index) in storageData" :key="item.path + index" class="is-flex mb-1 radius _height-40">
@@ -59,7 +79,7 @@
 			</div>
 		</section>
 
-		<div v-if="currentStep === 0 && storageData.length < 2"
+		<div v-if="currentStep === 0 && storageData.length < 1"
 			 class="_has-background-yellow-default _has-text-white _is-normal is-flex is-align-items-center font ml-5 mr-5 mb-4 pt-2 pb-2 _radius-line">
 			<div class="is-flex left ml-3 mr-2 is-align-items-center">
 				<b-icon class="is-16x16" custom-size="casa-19px" icon="danger" pack="casa"></b-icon>
@@ -209,6 +229,8 @@ export default {
 	},
 	data() {
 		return {
+			systemStorage: null,
+			systemStorageSelected: true,
 			storageData: [],
 			storageMissData: [],
 			diskData: {},
@@ -219,7 +241,6 @@ export default {
 			currentStep: 0,
 			title: "Merge Storages",
 			affirm: "Submit",
-			mergeInfo: [],
 			password: '',
 			runName: '',
 			notEmpty: false
@@ -236,18 +257,46 @@ export default {
 			// TODO: the part is repetition
 			//  with APPs Installation Location requirement document
 			// const storageRes = await this.$api.storage.list({system: "show"})
-			const storageRes = await this.$api.storage.list()
-			const storageArray = []
+			let sourceBasePath = '/var/lib/casaos/files'
+			try {
+				const mergeInfo = await this.$api.local_storage.getMergerfsInfo().then(res => {
+					const data = res.data.data
+					return Array.isArray(data) ? data[0] : data
+				})
+				if (mergeInfo && mergeInfo.source_base_path) {
+					sourceBasePath = mergeInfo.source_base_path
+				}
+			} catch (e) {
+				console.log(e)
+			}
+
+			const storageRes = await this.$api.storage.list({system: "show"})
+			const allStorage = []
 			const storageMissArray = []
 			let testMergeMiss = this.mergeStorageList
 			storageRes.data.data.forEach(item => {
 				item.children.forEach(part => {
 					part.disk = item.path
 					part.diskName = item.disk_name
-					storageArray.push(part)
+					allStorage.push(part)
 					testMergeMiss = testMergeMiss.filter(v => v !== part.uuid)
 				})
 			})
+
+			const systemStorage = allStorage
+				.filter(storage => {
+					const mountPoint = storage.mount_point
+					return mountPoint && (mountPoint === '/'
+						|| sourceBasePath === mountPoint
+						|| sourceBasePath.startsWith(`${mountPoint.replace(/\/$/, '')}/`))
+				})
+				.sort((a, b) => b.mount_point.length - a.mount_point.length)[0]
+			const storageArray = allStorage.filter(storage => storage.diskName !== 'System' && storage !== systemStorage)
+			this.systemStorage = systemStorage ? {
+				size: systemStorage.size,
+				availSize: systemStorage.avail,
+				sourcePath: sourceBasePath,
+			} : null
 			this.checkBoxMissGroup.push(...testMergeMiss);
 			testMergeMiss.forEach(item => {
 				storageMissArray.push({
@@ -359,16 +408,6 @@ export default {
 		}
 		,
 
-		// get the storage list be mounted of mergerfs
-		async getMerageStorage() {
-			try {
-				// TODO merge can't be used
-				this.mergeInfo = await this.$api.local_storage.getMergerfsInfo().then(res => res.data.data[0]["source_volume_uuids"]).catch(() => [])
-				this.checkBoxGroup.push(...this.mergeInfo)
-			} catch (e) {
-				console.log(e)
-			}
-		},
 		cancel() {
 			this.$emit('close')
 		},
@@ -493,6 +532,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.system-storage-row {
+	min-height: 3rem;
+}
+
 .non-backgroud {
 	background: none;
 }
