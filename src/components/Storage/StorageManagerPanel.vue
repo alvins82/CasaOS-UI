@@ -30,12 +30,29 @@
 					</div>
 					<b-tabs v-model="activeTab" :animated="false">
 						<b-tab-item :label="$t('Storage')" class="scrollbars-light-auto tab-item">
-							<storage-combination :storageData="mergeConbinationsStorageData"
-								:type="state_mainstorage_operability" @reload="getDiskList"></storage-combination>
 							<template v-if="storageData.length">
 								<storage-item v-for="(item, index) in storageData" :key="'storage' + index" :item="item"
 									@getDiskList="getDiskList"></storage-item>
 							</template>
+							<div v-else class="has-text-centered has-text-grey-light mt-6">
+								{{ $t('No standalone storage is available.') }}
+							</div>
+						</b-tab-item>
+						<b-tab-item :label="$t('Merged Storage')" class="scrollbars-light-auto tab-item">
+							<storage-combination v-if="mergeConbinationsStorageData.length"
+								:storageData="mergeConbinationsStorageData"
+								:type="state_mainstorage_operability"
+								@merge-success="showMergedStorage"
+								@reload="getDiskList"></storage-combination>
+							<div v-else class="has-text-centered has-text-grey-light mt-6">
+								<p>{{ $t('No merged storage has been configured.') }}</p>
+								<div class="is-flex is-justify-content-center mt-4">
+									<b-button :type="state_mainstorage_operability" rounded
+											  @click="showStorageSettingsModal">{{ $t('Merge Storages') }}
+									</b-button>
+									<cToolTip isBlock></cToolTip>
+								</div>
+							</div>
 						</b-tab-item>
 						<b-tab-item :label="$t('Drive')" class="scrollbars-light-auto tab-item">
 							<drive-item v-for="(item, index) in diskData" :key="'disk' + index" :item="item"></drive-item>
@@ -133,27 +150,15 @@
 
 		<!-- Modal-Card Body End -->
 		<!-- Modal-Card Footer Start-->
-		<footer v-if="!isCreating && activeTab == 0" class="modal-card-foot is-flex-shrink-0 is-flex is-align-items-center">
-			<template v-if="creatIsShow">
-				<div class="is-flex-grow-1"></div>
-				<div>
-					<b-button :label="$t('Cancel')" rounded @click="showDefault" />
-					<b-button :label="$t('Format and Create')" :loading="isValiding"
-						:type="createStorageType == 'format' ? 'is-primary' : ''" rounded @click="createStorge(true)" />
-					<b-button v-if="createStorageType == 'mountable'" :label="$t('Create')" :loading="isValiding" rounded
-						type="is-primary" @click="createStorge(false)" />
-				</div>
-			</template>
-			<template v-else-if="!mergeConbinationsStorageData.length">
-				<div class="is-flex-grow-1"></div>
-				<div class="is-flex is-flex-direction-row-reverse">
-					<b-button :type="state_mainstorage_operability" class="width" rounded
-						@click="showStorageSettingsModal">{{ $t('Merge Storages') }}
-					</b-button>
-					<cToolTip isBlock></cToolTip>
-				</div>
-			</template>
-
+		<footer v-if="!isCreating && activeTab == 0 && creatIsShow" class="modal-card-foot is-flex-shrink-0 is-flex is-align-items-center">
+			<div class="is-flex-grow-1"></div>
+			<div>
+				<b-button :label="$t('Cancel')" rounded @click="showDefault" />
+				<b-button :label="$t('Format and Create')" :loading="isValiding"
+					:type="createStorageType == 'format' ? 'is-primary' : ''" rounded @click="createStorge(true)" />
+				<b-button v-if="createStorageType == 'mountable'" :label="$t('Create')" :loading="isValiding" rounded
+					type="is-primary" @click="createStorge(false)" />
+			</div>
 		</footer>
 		<!-- Modal-Card Footer End -->
 
@@ -236,7 +241,7 @@ export default {
 					case 0:
 						this.$messageBus('storagemanager_storage');
 						break;
-					case 1:
+					case 2:
 						this.$messageBus('storagemanager_drive');
 						break;
 				}
@@ -274,6 +279,11 @@ export default {
 	},
 
 	methods: {
+		async showMergedStorage() {
+			await this.getDiskList()
+			this.activeTab = 1
+		},
+
 		/**
 		 * @description: Get disk list
 		 * @param {}
@@ -294,9 +304,16 @@ export default {
 			// TODO: the part is repetition
 			//  with APPs Installation Location requirement document
 			// 获取merge信息
+			let mergeInfo = null
 			let mergeStorageList
 			try {
-				mergeStorageList = await this.$api.local_storage.getMergerfsInfo().then((res) => res.data.data[0]['source_volume_uuids'])
+				mergeInfo = await this.$api.local_storage.getMergerfsInfo().then((res) => {
+					const data = res.data.data
+					return Array.isArray(data) ? data[0] : data
+				})
+				mergeStorageList = mergeInfo && Array.isArray(mergeInfo.source_volume_uuids)
+					? mergeInfo.source_volume_uuids
+					: []
 			} catch (e) {
 				mergeStorageList = []
 				console.log(e)
@@ -306,40 +323,33 @@ export default {
 				// get storage list info
 				const storageRes = await this.$api.storage.list({ system: "show" }).then(v => v.data.data)
 				let storageArray = []
-				let mergeConbinations = []
-				let testMergeMiss = mergeStorageList
 				storageRes.forEach(item => {
 					item.children.forEach(part => {
 						part.disk = item.path
 						part.diskName = item.disk_name
-						// storageArray.push(part)
-						if (mergeStorageList.includes(part.uuid) || (mergeStorageList.length > 0 && item.disk_name === 'System')) {
-							mergeConbinations.push(part)
-							testMergeMiss = testMergeMiss.filter(v => v !== part.uuid)
-						} else {
-							storageArray.push(part)
-						}
+						storageArray.push(part)
 					})
 				})
+
+				const mergeStorageSet = new Set(mergeStorageList)
+				const mergeConbinations = storageArray.filter(part => mergeStorageSet.has(part.uuid))
+				if (mergeStorageList.length && mergeInfo && mergeInfo.source_base_path) {
+					const sourceBasePath = mergeInfo.source_base_path
+					const baseStorage = storageArray
+						.filter(part => {
+							const mountPoint = part.mount_point
+							return mountPoint && (mountPoint === '/'
+								|| sourceBasePath === mountPoint
+								|| sourceBasePath.startsWith(`${mountPoint.replace(/\/$/, '')}/`))
+						})
+						.sort((a, b) => b.mount_point.length - a.mount_point.length)[0]
+					if (baseStorage && !mergeConbinations.includes(baseStorage)) {
+						mergeConbinations.unshift(baseStorage)
+					}
+				}
 				// sort
 				let storageArraySort = orderBy(storageArray, ['diskName', 'label'], ['desc', 'asc']);
 				let mergeConbinationsSort = orderBy(mergeConbinations, ['diskName', 'label'], ['desc', 'asc']);
-				// mergeConbinations.reverse();
-				testMergeMiss.forEach(item => {
-					mergeConbinationsSort.push({
-						"uuid": "",
-						"mount_point": "",
-						"size": "",
-						"avail": "",
-						"type": "",
-						"path": item,
-						"drive_name": "",
-						"label": "",
-						"persisted_in": "",
-						"disk": "",
-						"diskName": ""
-					})
-				})
 
 				const remapStorage = (storage) => {
 					return {
@@ -353,7 +363,8 @@ export default {
 						diskName: storage.drive_name,
 						path: storage.path,
 						mount_point: storage.mount_point,
-						disk: storage.disk
+						disk: storage.disk,
+						isMergeSource: mergeConbinations.includes(storage)
 					}
 				}
 				this.storageData = storageArraySort.map(remapStorage);
@@ -384,6 +395,9 @@ export default {
 				console.log(error);
 			}
 
+			if (this.isLoading && this.mergeConbinationsStorageData.length) {
+				this.activeTab = 1
+			}
 			this.isLoading = false
 		},
 
@@ -456,6 +470,9 @@ export default {
 					this.$EventBus.$emit(events.REFRESH_DISKLIST);
 				},
 				events: {
+					'merge-success': () => {
+						this.showMergedStorage();
+					},
 					close: () => {
 						this.$EventBus.$emit(events.REFRESH_DISKLIST);
 					}
