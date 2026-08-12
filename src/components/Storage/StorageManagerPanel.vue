@@ -45,7 +45,13 @@
 								@merge-success="showMergedStorage"
 								@reload="getDiskList"></storage-combination>
 							<div v-else class="has-text-centered has-text-grey-light mt-6">
-								{{ $t('No merged storage has been configured.') }}
+								<p>{{ $t('No merged storage has been configured.') }}</p>
+								<div class="is-flex is-justify-content-center mt-4">
+									<b-button :type="state_mainstorage_operability" rounded
+											  @click="showStorageSettingsModal">{{ $t('Merge Storages') }}
+									</b-button>
+									<cToolTip isBlock></cToolTip>
+								</div>
 							</div>
 						</b-tab-item>
 						<b-tab-item :label="$t('Drive')" class="scrollbars-light-auto tab-item">
@@ -144,27 +150,15 @@
 
 		<!-- Modal-Card Body End -->
 		<!-- Modal-Card Footer Start-->
-		<footer v-if="!isCreating && activeTab == 0" class="modal-card-foot is-flex-shrink-0 is-flex is-align-items-center">
-			<template v-if="creatIsShow">
-				<div class="is-flex-grow-1"></div>
-				<div>
-					<b-button :label="$t('Cancel')" rounded @click="showDefault" />
-					<b-button :label="$t('Format and Create')" :loading="isValiding"
-						:type="createStorageType == 'format' ? 'is-primary' : ''" rounded @click="createStorge(true)" />
-					<b-button v-if="createStorageType == 'mountable'" :label="$t('Create')" :loading="isValiding" rounded
-						type="is-primary" @click="createStorge(false)" />
-				</div>
-			</template>
-			<template v-else-if="!mergeConbinationsStorageData.length">
-				<div class="is-flex-grow-1"></div>
-				<div class="is-flex is-flex-direction-row-reverse">
-					<b-button :type="state_mainstorage_operability" class="width" rounded
-						@click="showStorageSettingsModal">{{ $t('Merge Storages') }}
-					</b-button>
-					<cToolTip isBlock></cToolTip>
-				</div>
-			</template>
-
+		<footer v-if="!isCreating && activeTab == 0 && creatIsShow" class="modal-card-foot is-flex-shrink-0 is-flex is-align-items-center">
+			<div class="is-flex-grow-1"></div>
+			<div>
+				<b-button :label="$t('Cancel')" rounded @click="showDefault" />
+				<b-button :label="$t('Format and Create')" :loading="isValiding"
+					:type="createStorageType == 'format' ? 'is-primary' : ''" rounded @click="createStorge(true)" />
+				<b-button v-if="createStorageType == 'mountable'" :label="$t('Create')" :loading="isValiding" rounded
+					type="is-primary" @click="createStorge(false)" />
+			</div>
 		</footer>
 		<!-- Modal-Card Footer End -->
 
