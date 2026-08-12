@@ -5,29 +5,33 @@
     role="dialog"
     :aria-label="appName"
   >
-    <header class="app-iframe-header is-flex is-align-items-center">
-      <h1 class="app-iframe-title is-flex-grow-1 mb-0">
-        {{ appName }}
-      </h1>
-      <button
-        class="app-iframe-close"
-        type="button"
-        :aria-label="$t('Close')"
-        :title="$t('Close')"
-        @click="$emit('close')"
-      >
-        <b-icon custom-size="casa-24px" icon="close-outline" pack="casa" />
-      </button>
-    </header>
-    <div class="app-iframe-content">
-      <iframe
-        :src="url"
-        :title="appName"
-        allow="autoplay; fullscreen"
-        allowfullscreen
-        class="app-iframe"
-      />
-    </div>
+    <transition name="c-zoom-in" appear>
+      <div class="app-iframe-dialog">
+        <header class="app-iframe-header is-flex is-align-items-center">
+          <h1 class="app-iframe-title is-flex-grow-1 mb-0">
+            {{ appName }}
+          </h1>
+          <button
+            class="app-iframe-close"
+            type="button"
+            :aria-label="$t('Close')"
+            :title="$t('Close')"
+            @click="$emit('close')"
+          >
+            <b-icon custom-size="casa-24px" icon="close-outline" pack="casa" />
+          </button>
+        </header>
+        <div class="app-iframe-content">
+          <iframe
+            :src="url"
+            :title="appName"
+            allow="autoplay; fullscreen"
+            allowfullscreen
+            class="app-iframe"
+          />
+        </div>
+      </div>
+    </transition>
   </section>
 </template>
 
@@ -53,16 +57,33 @@ export default {
   inset: 0;
   z-index: 1000;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.app-iframe-dialog {
+  display: flex;
   flex-direction: column;
+  width: 90vw;
+  height: 90vh;
+  max-width: 81rem;
+  min-height: 0;
+  overflow: hidden;
   background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.25);
 }
 
 .app-iframe-header {
-  flex: 0 0 3.25rem;
-  min-height: 3.25rem;
-  padding: 0 1rem 0 1.25rem;
-  color: #fff;
-  background: #1e1e1e;
+  flex: 0 0 3.5rem;
+  min-height: 3.5rem;
+  padding: 1.25rem 1.25rem 0.5rem 1.5rem;
+  color: #363636;
+  background-color: hsla(208, 16%, 94%, 1);
+  border-bottom: 1px solid rgb(228, 233, 237);
 }
 
 .app-iframe-title {
@@ -92,11 +113,11 @@ export default {
 
 .app-iframe-close:hover,
 .app-iframe-close:focus-visible {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .app-iframe-close:focus {
-  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline: 2px solid rgba(54, 54, 54, 0.45);
   outline-offset: 2px;
 }
 
@@ -111,5 +132,17 @@ export default {
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .app-iframe-overlay {
+    padding: 0;
+  }
+
+  .app-iframe-dialog {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
 }
 </style>
