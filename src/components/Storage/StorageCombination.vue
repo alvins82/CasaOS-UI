@@ -98,7 +98,13 @@ export default {
 			// 获取merge信息
 			let mergeStorageList
 			try {
-				mergeStorageList = await this.$api.local_storage.getMergerfsInfo().then((res) => res.data.data[0]['source_volume_uuids'])
+				mergeStorageList = await this.$api.local_storage.getMergerfsInfo().then((res) => {
+					const data = res.data.data
+					const mergeInfo = Array.isArray(data) ? data[0] : data
+					return mergeInfo && Array.isArray(mergeInfo.source_volume_uuids)
+						? mergeInfo.source_volume_uuids
+						: []
+				})
 			} catch (e) {
 				mergeStorageList = []
 				console.log(e)
