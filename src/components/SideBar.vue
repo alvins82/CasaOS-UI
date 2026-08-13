@@ -183,7 +183,7 @@ export default {
     height: auto;
     max-height: none;
     overflow: visible !important;
-    position: fixed;
+    position: relative;
 
     @include until(480px) {
         z-index: 20;
