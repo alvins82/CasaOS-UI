@@ -327,6 +327,7 @@ export default {
 					item.children.forEach(part => {
 						part.disk = item.path
 						part.diskName = item.disk_name
+						part.diskModel = item.disk_model
 						storageArray.push(part)
 					})
 				})
@@ -357,25 +358,34 @@ export default {
 						"label": "",
 						"persisted_in": "",
 						"disk": "",
-						"diskName": ""
+						"diskName": "",
+						"diskModel": ""
 					})
 				})
 				// sort
 				let storageArraySort = orderBy(storageArray, ['diskName', 'label'], ['desc', 'asc']);
 				let mergeConbinationsSort = orderBy(mergeConbinations, ['diskName', 'label'], ['desc', 'asc']);
 
-				const remapStorage = (storage) => {
-					return {
-						uuid: storage.uuid,
+					const remapStorage = (storage) => {
+						const size = Number(storage.size)
+						const used = Number(storage.used)
+						const usePercent = size > 0 && Number.isFinite(used)
+							? Math.min(100, Math.floor(used * 100 / size))
+							: 0
+						return {
+							uuid: storage.uuid,
 						name: storage.label,
 						isSystem: storage.diskName == "System",
 						fsType: storage.type,
 						size: storage.size,
 						availSize: storage.avail,
-						usePercent: 100 - Math.floor(storage.avail * 100 / storage.size),
+						usedSize: storage.used,
+						usePercent,
 						diskName: storage.drive_name,
 						path: storage.path,
 						mount_point: storage.mount_point,
+						diskPath: storage.disk,
+						diskModel: storage.diskModel,
 						disk: storage.disk,
 						persistedIn: storage.persisted_in,
 						isMergeSource: storage.diskName !== 'System' && mergeConbinations.some(item => item.uuid === storage.uuid)

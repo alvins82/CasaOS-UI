@@ -20,6 +20,12 @@
 								   append-to-body>
 							<b-icon class="mr-2 " icon="question-outline" pack="casa" size="is-small"></b-icon>
 						</b-tooltip>
+						<span v-if="item.diskPath || item.diskModel" class="ml-2">
+							· {{ $t('Drive') }}:
+							<span v-if="item.diskModel">{{ item.diskModel }}</span>
+							<span v-if="item.diskModel && item.diskPath"> ({{ item.diskPath }})</span>
+							<span v-else>{{ item.diskPath }}</span>
+						</span>
 					</p>
 					<p class="has-text-left has-text-full-04 mt-1">{{
 							$t("Available Total", {

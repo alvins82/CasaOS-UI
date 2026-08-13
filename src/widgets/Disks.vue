@@ -53,13 +53,13 @@
 									{{ item.model }}
 								</h4>
 								<p class="has-text-left is-size-14px disk-info">
-									{{ $t('Used') }}: {{ renderSize(item.size - item.avail) }}<br>
+									{{ $t('Used') }}: {{ renderSize(usbUsed(item)) }}<br>
 									{{ $t('Total') }}: {{ renderSize(item.size) }}
 								</p>
 							</div>
 						</div>
-						<b-progress :type="(Math.floor((item.size - item.avail) * 100 / item.size)) | getProgressType"
-							:value="Math.floor((item.size - item.avail) * 100 / item.size)" class="mt-2"
+						<b-progress :type="usbPercent(item) | getProgressType"
+							:value="usbPercent(item)" class="mt-2"
 							size="is-small"></b-progress>
 					</div>
 				</div>
@@ -100,8 +100,24 @@ export default {
 		getDiskInfo(diskInfo) {
 			this.totalSize = diskInfo.size
 			this.totalUsed = diskInfo.used
-			this.totalPercent = 100 - Math.floor(diskInfo.avail * 100 / this.totalSize)
+			this.totalPercent = this.totalSize > 0
+				? Math.min(100, Math.floor(diskInfo.used * 100 / this.totalSize))
+				: 0
 			this.health = diskInfo.health
+		},
+		usbUsed(item) {
+			const used = Number(item.used)
+			if (Number.isFinite(used) && used >= 0) {
+				return used
+			}
+			return Math.max(0, Number(item.size) - Number(item.avail))
+		},
+		usbPercent(item) {
+			const size = Number(item.size)
+			if (!Number.isFinite(size) || size <= 0) {
+				return 0
+			}
+			return Math.min(100, Math.floor(this.usbUsed(item) * 100 / size))
 		},
 
 		showDiskManagement() {
