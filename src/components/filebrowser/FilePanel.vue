@@ -396,7 +396,7 @@ export default {
 				: "format-list-bulleted";
 		},
 		hiddenFilesIcon() {
-			return this.showHiddenFiles ? "eye-off" : "eye";
+			return this.showHiddenFiles ? "eye-off-outline" : "eye-outline";
 		},
 		showHiddenFilesLabel() {
 			return this.$t(this.showHiddenFiles ? "Hide hidden files" : "Show hidden files");
