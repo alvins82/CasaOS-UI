@@ -2,6 +2,25 @@
 
 All notable changes to CasaOS UI are documented here.
 
+## [0.4.28] - 2026-08-13
+
+### Added
+
+- Add a Settings flow for checking and applying Debian-family system package updates, including package review, confirmation, live logs, reboot status, and completion reconciliation ([CasaOS-UI #10](https://github.com/alvins82/CasaOS-UI/pull/10)).
+
+### Changed
+
+- Add a persistent Show Search Bar setting and let the sidebar grow with its contents instead of clipping lower widgets behind a fixed scrollbar ([CasaOS-UI #8](https://github.com/alvins82/CasaOS-UI/pull/8)).
+- Show the physical parent disk model and path alongside storage filesystems ([CasaOS-UI #9](https://github.com/alvins82/CasaOS-UI/pull/9)).
+
+### Fixed
+
+- Use actual filesystem usage for storage bars and display an em dash for unmounted filesystems instead of misleading `NaN` values ([CasaOS-UI #9](https://github.com/alvins82/CasaOS-UI/pull/9)).
+
+### Verification
+
+- Production build completed with `pnpm build`.
+
 ## [0.4.27] - 2026-08-12
 
 ### Fixed
