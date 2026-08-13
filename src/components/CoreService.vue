@@ -127,6 +127,25 @@ export default {
 
       return true
     },
+    formatDiskUsage(properties) {
+      const size = Number(properties.size)
+      const available = Number(properties.avail)
+      const mountPoint = properties.mount_point
+      const isMounted = Array.isArray(mountPoint)
+        ? mountPoint.length > 0
+        : typeof mountPoint === 'string' && mountPoint.trim().length > 0
+
+      if (Number.isFinite(size) && size > 0 && isMounted &&
+        Number.isFinite(available) && available >= 0 && available <= size) {
+        const reportedUsed = Number(properties.used)
+        const used = Number.isFinite(reportedUsed) && reportedUsed >= 0 && reportedUsed <= size
+          ? reportedUsed
+          : size - available
+        return `${this.renderSize(used)} / ${this.renderSize(size)}`
+      }
+
+      return `— / ${this.renderSize(size)}`
+    },
     createWS(domain) {
       let socket
       // reference:
@@ -262,7 +281,7 @@ export default {
         })
       }
       if (operateType === 'added') {
-        const percent = eventJson.properties.avail ? `${this.renderSize(eventJson.properties.size - eventJson.properties.avail)} / ${this.renderSize(eventJson.properties.size)}` : 'NaN'
+        const percent = this.formatDiskUsage(eventJson.properties)
         this.$set(this.noticesData[eventType].content, entityUUID, {
           title: eventJson.properties.model || 'Found a new drive',
           icon: '/storage/USB.png',
@@ -309,8 +328,7 @@ export default {
         })
       }
       if (operateType === 'added') {
-        const availValue = eventJson.properties.avail > 0 ? this.renderSize(eventJson.properties.size - eventJson.properties.avail) : 'NaN'
-        const percent = `${availValue} / ${this.renderSize(eventJson.properties.size)}`
+        const percent = this.formatDiskUsage(eventJson.properties)
         // let percent = eventType.toUpperCase();
         this.$set(this.noticesData[driveType].content, entityUUID, {
           title: eventJson.properties.model || 'Found a new drive',
@@ -356,7 +374,7 @@ export default {
         })
       }
       if (operateType === 'added') {
-        const percent = eventJson.properties.avail ? `${this.renderSize(eventJson.properties.used)} / ${this.renderSize(eventJson.properties.size)}` : 'NaN'
+        const percent = this.formatDiskUsage(eventJson.properties)
         this.$set(this.noticesData[eventType].content, entityUUID, {
           title: eventJson.properties.model || 'Found a new drive',
           icon: '/storage/disk.png',
