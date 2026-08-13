@@ -318,7 +318,7 @@ export default {
     <!-- File Panel Start -->
     <b-modal
       v-model="isFileActive" :can-cancel="[]" :destroy-on-hide="false" animation="zoom-in" aria-modal
-      custom-class="file-panel" full-screen has-modal-card @after-enter="afterFileEnter"
+      custom-class="file-panel" has-modal-card @after-enter="afterFileEnter"
     >
       <template #default="props">
         <FilePanel ref="filePanel" @close="props.close" />
