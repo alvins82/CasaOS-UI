@@ -1,4 +1,8 @@
 .file-panel {
+    .animation-content {
+        max-width: 90% !important;
+    }
+
     .b-sidebar {
         .sidebar-content {
             width: 15rem;
@@ -8,10 +12,10 @@
     }
 
     .modal-card {
-        width: 100%;
-        height: 100vh;
-        max-height: 100vh;
-        border-radius: 0;
+        width: 90vw;
+        height: calc(100vh - 2.5rem);
+        max-height: calc(100vh - 2.5rem);
+        border-radius: $backDropBorderRadius;
         background-color: white !important;
 
         // operation-status
@@ -1368,13 +1372,26 @@
         .animation-content {
             max-width: 100% !important;
             width: 100% !important;
+            height: 100%;
         }
 
         .modal-card {
             margin: 0;
+            width: 100%;
+            height: 100%;
+            max-height: calc(var(--vh, 1vh) * 100);
+            border-radius: 0;
         }
     }
 
+}
+
+@media screen and (min-width: 1440px) {
+    .file-panel {
+        .modal-card {
+            width: 81rem;
+        }
+    }
 }
 
 @media screen and (max-width: 480px) {
