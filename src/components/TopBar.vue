@@ -3,6 +3,7 @@ import AccountPanel from './account/AccountPanel.vue'
 import TerminalPanel from './logsAndTerminal/TerminalPanel.vue'
 import PortPanel from './settings/PortPanel.vue'
 import UpdateModal from './settings/UpdateModal.vue'
+import SystemPackageUpdateModal from './settings/SystemPackageUpdateModal.vue'
 import { mixin } from '@/mixins/mixin'
 import messages from '@/assets/lang'
 
@@ -336,6 +337,24 @@ export default {
         props: {
           changeLog: this.updateInfo.version.change_log,
         },
+      })
+    },
+
+    /**
+     * @description: Open the operating system package update modal
+     * @return {*} void
+     */
+    showSystemPackageUpdateModal() {
+      this.$messageBus('dashboardsetting_systempackages')
+      this.$buefy.modal.open({
+        parent: this,
+        component: SystemPackageUpdateModal,
+        hasModalCard: true,
+        customClass: 'network-storage-modal',
+        trapFocus: true,
+        canCancel: ['escape'],
+        scroll: 'keep',
+        animation: 'zoom-in',
       })
     },
 
@@ -762,6 +781,26 @@ export default {
             </div>
           </div>
           <!-- Update End -->
+
+          <!-- System Package Update Start -->
+          <div class="_is-large hover-effect _is-radius pr-2 mr-4 ml-4">
+            <div class="is-flex is-align-items-center">
+              <div class="is-flex is-align-items-center is-flex-grow-1 _is-normal">
+                <b-icon class="mr-1 ml-2" icon="update-outline" pack="casa" size="is-20" />
+                {{ $t("System packages") }}
+              </div>
+            </div>
+            <div class="is-flex is-align-items-center is-justify-content-end update-container pl-5">
+              <div class="is-flex-grow-1 is-size-7">
+                {{ $t("Check for updates") }}
+              </div>
+              <b-button class="ml-2" rounded size="is-small" type="is-dark" @click.stop="showSystemPackageUpdateModal">
+                {{ $t("Check") }}
+              </b-button>
+            </div>
+          </div>
+          <!-- System Package Update End -->
+
           <!-- Restart or Shutdown Start -->
           <div
             class="is-flex is-align-content-center is-justify-content-center _footer mt-4 pl-3 pr-3 pt-2 pb-2"

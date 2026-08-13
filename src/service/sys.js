@@ -89,6 +89,21 @@ const sys = {
 		return api.post(`${PREFIX}/update`);
 	},
 
+	// Check for operating system package updates
+	getSystemPackages() {
+		return api.get(`${PREFIX}/packages`);
+	},
+
+	// Start operating system package updates
+	startSystemPackageUpdate() {
+		return api.post(`${PREFIX}/packages/update`);
+	},
+
+	// Get operating system package update status
+	getSystemPackageUpdateStatus() {
+		return api.get(`${PREFIX}/packages/update/status`);
+	},
+
 	// stop casaos
 	stopCasaOS() {
 		return api.post(`${PREFIX}/stop`);
