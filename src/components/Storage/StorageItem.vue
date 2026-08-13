@@ -38,11 +38,15 @@
 
 			</div>
 			<div v-if="!item.isSystem && !item.isMergeSource" class="is-flex is-align-items-center b-group">
-				<b-button :disabled="isRemoving" :loading="isFormating" :type="isFormating?'is-primary':''"
+				<b-button :disabled="isRemoving || isRenaming" :loading="isFormating" :type="isFormating?'is-primary':''"
 						  rounded size="is-small" @click="formatStorage(item.path,item.mount_point)">
 					{{ $t('Format') }}
 				</b-button>
-				<b-button :disabled="isFormating" :loading="isRemoving" :type="isRemoving?'is-primary':''" class="ml-2"
+				<b-button :disabled="isFormating || isRemoving" :loading="isRenaming" :type="isRenaming?'is-primary':''" class="ml-2"
+						  rounded size="is-small" @click="renameStorage(item.path,item.name)">
+					{{ $t('Rename') }}
+				</b-button>
+				<b-button :disabled="isFormating || isRenaming" :loading="isRemoving" :type="isRemoving?'is-primary':''" class="ml-2"
 						  rounded size="is-small" @click="removeStorage(item.disk)"> {{ $t('Remove') }}
 				</b-button>
 			</div>
@@ -71,10 +75,63 @@ export default {
 	data() {
 		return {
 			isFormating: false,
-			isRemoving: false
+			isRemoving: false,
+			isRenaming: false
 		}
 	},
 	methods: {
+		renameStorage(path, currentName) {
+			this.isRenaming = true;
+
+			this.$buefy.dialog.prompt({
+				title: this.$t('Rename'),
+				message: this.$t('Storage Name'),
+				inputAttrs: {
+					type: "text",
+					value: currentName,
+					required: true,
+					maxlength: 16,
+					pattern: "[A-Za-z0-9_]+",
+					autocomplete: "off"
+				},
+				trapFocus: true,
+				confirmText: this.$t('OK'),
+				cancelText: this.$t('Cancel'),
+				onCancel: () => {
+					this.isRenaming = false;
+				},
+				onConfirm: (value) => {
+					this.$api.storage.rename({
+						path: path,
+						name: value
+					}).then((res) => {
+						if (res.data.success != 200) {
+							this.isRenaming = false;
+							this.$buefy.toast.open({
+								duration: 3000,
+								message: res.data.message,
+								type: 'is-danger'
+							})
+							return
+						}
+
+						delay(() => {
+							this.isRenaming = false;
+							this.$emit('getDiskList');
+						}, 500);
+					}).catch(e => {
+						this.isRenaming = false;
+						this.$buefy.toast.open({
+							duration: 3000,
+							message: e.response?.data?.message || e.message,
+							type: 'is-danger'
+						})
+						console.error(e)
+					})
+				}
+			})
+		},
+
 		removeStorage(path) {
 			this.isRemoving = true;
 

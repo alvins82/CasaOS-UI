@@ -27,6 +27,11 @@ const storage = {
 		return api.put(`${PREFIX}`, data);
 	},
 
+	// rename storage
+	rename(data) {
+		return api.put(`${PREFIX}/rename`, data);
+	},
+
 	// delete storage
 	delete(data) {
 		return api.delete(`${PREFIX}`, data);
