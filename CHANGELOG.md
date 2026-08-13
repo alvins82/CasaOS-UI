@@ -2,6 +2,18 @@
 
 All notable changes to CasaOS UI are documented here.
 
+## [0.4.27] - 2026-08-12
+
+### Fixed
+
+- Keep system storage out of merged storage sources.
+- Preserve system AppData at `/DATA/AppData` while `/DATA` uses external storage.
+- Preserve disconnected merged sources and provide an explicit merged-storage removal flow.
+
+### Verification
+
+- Production build completed with `pnpm build`.
+
 ## [0.4.26] - 2026-08-12
 
 ### Fixed

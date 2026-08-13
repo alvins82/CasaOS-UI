@@ -332,21 +332,34 @@ export default {
 				})
 
 				const mergeStorageSet = new Set(mergeStorageList)
-				const mergeConbinations = storageArray.filter(part => mergeStorageSet.has(part.uuid))
-				if (mergeStorageList.length && mergeInfo && mergeInfo.source_base_path) {
-					const sourceBasePath = mergeInfo.source_base_path
-					const baseStorage = storageArray
-						.filter(part => {
-							const mountPoint = part.mount_point
-							return mountPoint && (mountPoint === '/'
-								|| sourceBasePath === mountPoint
-								|| sourceBasePath.startsWith(`${mountPoint.replace(/\/$/, '')}/`))
-						})
-						.sort((a, b) => b.mount_point.length - a.mount_point.length)[0]
-					if (baseStorage && !mergeConbinations.includes(baseStorage)) {
-						mergeConbinations.unshift(baseStorage)
+				const mergeConbinations = []
+				const missingMergeSources = new Set(mergeStorageList)
+				storageArray.forEach(part => {
+					if (!mergeStorageSet.has(part.uuid)) {
+						return
 					}
-				}
+					missingMergeSources.delete(part.uuid)
+					// The system volume is never a mergerfs source. Older configurations
+					// may still contain its UUID, so filter it from the UI as well.
+					if (part.diskName !== 'System') {
+						mergeConbinations.push(part)
+					}
+				})
+				missingMergeSources.forEach(uuid => {
+					mergeConbinations.push({
+						"uuid": "",
+						"mount_point": "",
+						"size": "",
+						"avail": "",
+						"type": "",
+						"path": uuid,
+						"drive_name": "",
+						"label": "",
+						"persisted_in": "",
+						"disk": "",
+						"diskName": ""
+					})
+				})
 				// sort
 				let storageArraySort = orderBy(storageArray, ['diskName', 'label'], ['desc', 'asc']);
 				let mergeConbinationsSort = orderBy(mergeConbinations, ['diskName', 'label'], ['desc', 'asc']);
@@ -364,7 +377,8 @@ export default {
 						path: storage.path,
 						mount_point: storage.mount_point,
 						disk: storage.disk,
-						isMergeSource: mergeConbinations.includes(storage)
+						persistedIn: storage.persisted_in,
+						isMergeSource: storage.diskName !== 'System' && mergeConbinations.some(item => item.uuid === storage.uuid)
 					}
 				}
 				this.storageData = storageArraySort.map(remapStorage);
@@ -453,7 +467,13 @@ export default {
 			// 获取merge信息
 			let mergeStorageList
 			try {
-				mergeStorageList = await this.$api.local_storage.getMergerfsInfo().then((res) => res.data.data[0]['source_volume_uuids'])
+				mergeStorageList = await this.$api.local_storage.getMergerfsInfo().then((res) => {
+					const data = res.data.data
+					const mergeInfo = Array.isArray(data) ? data[0] : data
+					return mergeInfo && Array.isArray(mergeInfo.source_volume_uuids)
+						? mergeInfo.source_volume_uuids
+						: []
+				})
 			} catch (e) {
 				mergeStorageList = []
 				console.log(e)
