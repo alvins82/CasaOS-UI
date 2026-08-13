@@ -125,6 +125,25 @@ export default {
     },
 
     /**
+     * @description: Update the search bar visibility from widget settings
+     * @param {boolean} value
+     * @return {*} void
+     */
+    async handleSearchBarChange(value) {
+      const searchSwitch = Boolean(value)
+      this.$store.commit('SET_SEARCH_ENGINE_SWITCH', searchSwitch)
+      this.barData = {
+        ...this.barData,
+        search_switch: searchSwitch,
+      }
+
+      const saveRes = await this.$api.users.setCustomStorage('system', this.barData)
+      if (saveRes.data.success === 200) {
+        this.barData = saveRes.data.data
+      }
+    },
+
+    /**
      * @description: Show Files
      * @param {*}
      * @return {*} void
@@ -255,7 +274,7 @@ export default {
         <div class="columns is-variable is-2">
           <div class="column is-one-quarter slider-content">
             <!-- SideBar Start -->
-            <SideBar v-if="!hardwareInfoLoading" />
+            <SideBar v-if="!hardwareInfoLoading" @searchBarChange="handleSearchBarChange" />
             <!-- SideBar End -->
           </div>
           <div :class="{ open: sidebarOpen }" class="column is-three-quarters main-content">

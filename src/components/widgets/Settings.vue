@@ -31,6 +31,16 @@
 								type="is-dark" @input="handleInput"></b-switch>
 						</b-field>
 					</div>
+					<div class="is-flex is-align-items-center item">
+						<div class="is-flex is-align-items-center is-flex-grow-1">
+							<b-icon icon="show-search-outline" pack="casa" class="mr-2"></b-icon>
+							<b>{{ $t('Show Search Bar') }}</b>
+						</div>
+						<b-field>
+							<b-switch :value="searchBarShown" class="is-flex-direction-row-reverse mr-0" size="is-small"
+								type="is-dark" @input="handleSearchBarInput"></b-switch>
+						</b-field>
+					</div>
 				</b-dropdown-item>
 			</b-dropdown>
 		</div>
@@ -64,6 +74,11 @@ export default {
 	},
 	props: {
 		widgetsSettings: Array
+	},
+	computed: {
+		searchBarShown() {
+			return this.$store.state.searchEngineSwitch
+		}
 	},
 
 	watch: {
@@ -108,9 +123,10 @@ export default {
 		handleInput() {
 			this.$emit('change', this.settingsData)
 		},
+		handleSearchBarInput(value) {
+			this.$emit('searchBarChange', value)
+		},
 		onRezise() {
-			// let container = document.querySelector(".scroll-area")
-			//console.log(container.offsetHeight);
 		}
 	},
 	destroyed() {
