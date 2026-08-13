@@ -2,6 +2,25 @@
 
 All notable changes to CasaOS UI are documented here.
 
+## [0.4.29] - 2026-08-13
+
+### Added
+
+- Open the Files app in an App Store-style dialog on desktop while retaining edge-to-edge behavior on smaller screens ([CasaOS-UI #11](https://github.com/alvins82/CasaOS-UI/pull/11)).
+- Add a Rename action for non-system, non-merged storage volumes and refresh Storage Manager after a successful rename ([CasaOS-UI #14](https://github.com/alvins82/CasaOS-UI/pull/14)).
+
+### Changed
+
+- Keep the dashboard sidebar in normal document flow so the dashboard has one scroll surface and lower widgets remain reachable ([CasaOS-UI #12](https://github.com/alvins82/CasaOS-UI/pull/12)).
+
+### Fixed
+
+- Use the CasaOS icon font's `eye-outline` and `eye-off-outline` glyphs for the hidden-files toggle ([CasaOS-UI #13](https://github.com/alvins82/CasaOS-UI/pull/13)).
+
+### Verification
+
+- Production build completed with `pnpm build`.
+
 ## [0.4.28] - 2026-08-13
 
 ### Added
