@@ -2,6 +2,20 @@
 
 All notable changes to CasaOS UI are documented here.
 
+## [0.4.30] - 2026-08-15
+
+### Changed
+
+- Keep restart polling and page reload behavior while leaving the shutdown modal in place after a successful shutdown request ([CasaOS-UI #15](https://github.com/alvins82/CasaOS-UI/pull/15)).
+
+### Fixed
+
+- Surface power API failures in the dashboard instead of silently reloading after a failed shutdown or restart ([CasaOS-UI #15](https://github.com/alvins82/CasaOS-UI/pull/15)).
+
+### Verification
+
+- Production build completed with `pnpm exec vue-cli-service build`.
+
 ## [0.4.29] - 2026-08-13
 
 ### Added
