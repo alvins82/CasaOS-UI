@@ -449,17 +449,29 @@ export default {
       let timer
       const path = key === 'Shutdown' ? 'off' : 'restart'
       this.$api.sys.power(path).then((res) => {
-        if (res.data.success === 200) {
-          this.showPowerMessage = res.data.data
-          timer = setInterval(() => {
-            this.$api.users.getUserStatus().then((res) => {
-              if (res.data.data.initialized) {
-                clearInterval(timer)
-                location.reload()
-              }
-            })
-          }, 30000)
+        if (res.data.success !== 200) {
+          throw new Error(res.data.message || 'Failed to perform power operation.')
         }
+
+        this.showPowerMessage = res.data.data
+        if (path === 'off') {
+          return
+        }
+        timer = setInterval(() => {
+          this.$api.users.getUserStatus().then((res) => {
+            if (res.data.data.initialized) {
+              clearInterval(timer)
+              location.reload()
+            }
+          })
+        }, 30000)
+      }).catch((error) => {
+        clearInterval(timer)
+        this.resetPower()
+        this.$buefy.toast.open({
+          message: error?.response?.data?.message || error?.message || 'Failed to perform power operation.',
+          type: 'is-danger',
+        })
       })
     },
     resetPower() {
